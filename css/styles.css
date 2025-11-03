@@ -1,0 +1,775 @@
+:root{
+  --bg:#E63E62;      /* cherry-rose primary */
+  --card:#8F2A46;    /* deep plum for cards */
+  --line:#6E1F36;    /* borders */
+  --muted:#FFD5E1;   /* hints */
+  --ink:#000000;     /* one-ink for tag/icons */
+  --btn:#6B1631;     /* buttons */
+  --btnHover:#5A1229;
+  --fg:#FFFFFF;      /* text */
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}
+
+/* Centra verticalmente il contenuto delle sub-card dentro gli step */
+.step > .card{
+  display:flex;
+  align-items:center;   /* centra i figli in verticale */
+  padding:12px;         /* mantieni il padding simmetrico */
+}
+.step > .card .inline{  /* fai occupare alla riga tutta la larghezza della sub-card */
+  width:100%;
+}
+.step .inline{ align-items:center; }  /* già presente nella versione che ti ho dato */
+select{ line-height:1.3; }              /* piccola correzione per l’altezza interna della select */
+
+
+h1{font-size:20px;margin:6px 0 6px}
+p.lead{margin:15px 0;color:var(--fg);opacity:.9;font-size:14px}
+
+button,select,input,a.btn{
+  padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(0,0,0,.18);color:var(--fg);font-size:15px;height:46px
+}
+button{background:var(--btn);border:none;font-weight:700;cursor:pointer}
+button:hover{background:var(--btnHover)}
+button.ghost{background:transparent;border:1px solid var(--line)}
+.inline{display:flex;gap:10px;align-items:center}
+.actions{display:flex;gap:10px;justify-content:space-between;margin-top:6px}
+.tiny{font-size:12px;color:var(--muted)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+/* Generate: timeline */
+.timeline{position:relative}
+.rail{position:absolute;left:50%;width:2px;background:var(--fg);opacity:.35;z-index:0}
+.step{position:relative;display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin:14px 0;z-index:1}
+.step.fixed{background:#7B2840}
+label{font-weight:600;font-size:14px;white-space:nowrap}
+.row{display:flex;flex-direction:column;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.square{width:42px;min-width:42px;height:42px;display:grid;place-items:center;padding:0}
+.trash{width:18px;height:18px;fill:var(--fg);opacity:.9}
+
+
+/* BeanTag preview area */
+.bean{width:100%;display:flex;justify-content:center;align-items:center;padding:8px;background:#FFE7EE;border:1px dashed var(--line);border-radius:12px}
+canvas#beanCanvas{width:min(64vw,260px);height:auto;background:#FFFFFF;border-radius:10px}
+
+/* Summary page: vertical list */
+#summary{list-style:none;margin:0;padding:0}
+.sum-row{display:grid;grid-template-columns:40px 1fr;align-items:start;gap:10px;padding:6px 0;border-top:1px dashed var(--line)}
+.sum-code{font-weight:700;letter-spacing:.5px}
+.sum-title{display:flex;align-items:center;gap:8px;cursor:pointer}
+.caret-small{width:8px;height:8px;border:solid var(--fg);border-width:0 2px 2px 0;display:inline-block;transform:rotate(-45deg);transition:.15s transform}
+details[open] .caret-small{transform:rotate(45deg)}
+details summary{list-style:none}
+details summary::-webkit-details-marker{display:none}
+.sum-desc{font-size:12px;opacity:.9;margin:6px 0 0 18px}
+
+/* Home */
+.home-cta{display:grid;grid-template-columns:1fr;gap:12px}
+.home-cta a{display:block;text-align:center;text-decoration:none;background:var(--btn);
+  border:none;color:var(--fg);font-weight:800;padding:18px;border-radius:14px}
+.home-cta a:hover{background:var(--btnHover)}
+
+/* Step controls */
+/* Step controls — REPLACE */
+.step{position:relative}
+
+.step .close{
+  position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;
+  border:1px solid var(--line);background:rgba(0,0,0,.18);display:grid;place-items:center;cursor:pointer
+}
+.step .close:hover{background:var(--btnHover)}
+
+/* Riga con: numero | select | handle  */
+.step .inline{
+  display:grid;
+  grid-template-columns:auto 1fr 34px;  /* numero | select | maniglia */
+  align-items:center;
+  gap:10px;
+}
+
+/* Numero (forzo anche se l’HTML ha .mono senza .num) */
+.step .num, .step .mono{
+  height:46px;
+  display:flex;align-items:center;
+  padding:0 6px 0 2px !important; /* sovrascrive l’inline padding dell’Inspector */
+  font-weight:700;
+}
+
+/* BeanTag: titolo sopra, box sotto; nascosto finché non è .open */
+#beanPanel{display:none}
+#beanPanel.open{display:flex; flex-direction:column; gap:8px}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+header h1{font-size:20px;margin:6px 0 6px}
+header p{margin:0;color:var(--fg);opacity:.9;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}
+
+/* Timeline & rail (rail invisibile dentro i box) */
+.timeline{position:relative}
+.rail{position:absolute;left:50%;width:2px;background:var(--fg);opacity:.35;z-index:0;pointer-events:none}
+#stepsWrap{position:relative} /* riferimento per drag assoluto */
+
+/* Step box */
+.step{position:relative;display:flex;flex-direction:column;gap:10px;
+      padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+      margin:14px 0;z-index:1;transition:transform .18s ease;background-clip:padding-box}
+.step.fixed{background:#7B2840;color:var(--fg)}
+
+/* Tipografia “com’era prima” */
+label{font-weight:600;font-size:14px; white-space: normal;line-height: 1.3;word-break: break-word;margin-top: 10px}
+
+.num{font-weight:700;font-size:16px;line-height:1;white-space:nowrap;padding:10px 6px 0 2px}
+
+/* Campi */
+.row{display:flex;flex-direction:column;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+select,input,button{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(0,0,0,.18);color:var(--fg);font-size:16px;height:46px}
+select{cursor:pointer}
+button{background:var(--btn);border:none;color:var(--fg);font-weight:700;cursor:pointer}
+
+/* non toccare i toggle */
+button:hover:not(.ios-switch):not(.temp-switch){
+  background: var(--btnHover);
+}
+
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+.actions{display:flex;gap:10px;justify-content:space-between;margin-top:6px}
+.tiny{font-size:12px;color:var(--muted)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.inline{display:flex;gap:10px;align-items:center}
+.right{margin-left:auto}
+
+/* X compatta in alto-destra */
+/* Bottone chiusura, con X disegnata via CSS (niente font) */
+.xbtn{
+  position:absolute;
+  right:-8px;
+  top:-12px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:rgba(0,0,0,.18);
+  color:var(--fg);
+  display:block;
+  cursor:pointer;
+  padding:0;
+  line-height:0;      /* evita che eventuale testo influenzi l'allineamento */
+  font-size:0;        /* nasconde il testo se rimane nel markup */
+}
+.xbtn:hover{ background:var(--btnHover); }
+
+/* Disegno della X (due trattini centrati) */
+.xbtn::before,
+.xbtn::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:14px;         /* lunghezza braccio */
+  height:2px;         /* spessore braccio (pari per il pixel snapping) */
+  background:currentColor;
+  transform-origin:center;
+  transform:translate(-50%,-50%) rotate(45deg);
+  border-radius:2px;  /* estremità leggermente arrotondate */
+}
+.xbtn::after{
+  transform:translate(-50%,-50%) rotate(-45deg);
+}
+/* aumentare/diminuire */
+.xbtn::before, .xbtn::after{ width:16px; height:2px; }  /* esempio */
+
+/* X più piccola solo su desktop */
+@media (min-width: 768px) {
+  .xbtn::before,
+  .xbtn::after {
+    width: 10px;   /* bracci più corti (default 14px) */
+    ///*height: 1.8px; /* leggermente più sottili */
+  }
+
+  .xbtn {
+    width: 24px;   /* cerchio più piccolo */
+    height: 24px;
+  }
+}
+
+/* BeanTag area */
+
+/* Titolo BeanTag sopra al box, visibile solo quando il pannello è aperto */
+#beanPanel{ display:none; }              /* già presente: lasciamo così */
+#beanPanel.open{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.bean-title{
+  margin-top: 12px;
+  font-size:16px;
+  font-weight:700;
+  white-space:nowrap;
+}
+
+.bean{width:100%;display:flex;justify-content:center;align-items:center;
+      padding:8px;background:#FFE7EE;border:1px dashed var(--line);border-radius:12px}
+canvas#beanCanvas{width:min(64vw,260px);height:auto;background:#FFFFFF;border-radius:10px}
+
+/* CPC — testo a sinistra, box codice a destra; icona copia centrata */
+.cpc-row{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* Box codice + icona copia */
+#cpcWrap{ position:relative; }
+
+#cpc{
+  display:flex;               /* centra verticalmente il contenuto */
+  align-items:center;
+  line-height:1.2;
+  padding:10px 44px 10px 12px; /* spazio a destra per l’icona */
+  background:rgba(0,0,0,.18);
+  border:1px solid var(--line);
+  border-radius:8px;
+  min-height:46px;            /* coerente con i bottoni */
+  overflow:auto;
+  word-break:break-all;
+}
+
+#copyIcon{
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%); /* centratura verticale perfetta */
+  width:32px;
+  border-radius:8px;
+  background:transparent;
+  display:grid;place-items:center;
+  cursor:pointer;
+}
+#copyIcon svg{ width:18px;height:18px;fill:currentColor; }
+
+
+
+
+a.btn{display:inline-block;background:transparent;border:1px solid var(--line);
+      color:var(--fg);text-decoration:none;padding:10px 12px;border-radius:10px}
+
+/* Download menu */
+.icon-btn{display:inline-flex;align-items:center;gap:8px}
+.caret{margin-left:6px;border:solid var(--fg);border-width:0 2px 2px 0;display:inline-block;padding:3px;transform:rotate(45deg)}
+
+/* --- Dropdown Menu --- */
+.menu {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.menu .menu-trigger {
+  width: 100%;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.caret {
+  margin-left: 6px;
+  border: solid var(--fg);
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.menu.open .caret {
+  transform: rotate(-135deg); /* caret su quando il menu è aperto */
+}
+
+.menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-width: 160px;
+  display: none;
+  z-index: 10;
+}
+
+.menu.open .menu-list {
+  display: block;
+}
+
+.menu-list a {
+  display: block;
+  padding: 10px 14px;
+  color: var(--fg);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.menu-list a:last-child {
+  border-bottom: none;
+}
+
+.menu-list a:hover {
+  background: var(--btnHover);
+}
+
+
+/* Pulsanti quadrati piccoli (se usi ancora .square in qualche punto) */
+.square{width:42px;min-width:42px;height:42px;display:grid;place-items:center;padding:0}
+.trash{width:18px;height:18px;fill:var(--fg);opacity:.9}
+
+
+/* Riga divisa in due colonne uguali */
+.split-2{
+  display:grid;
+  grid-template-columns:1fr 1fr; /* 50% | 50% */
+  gap:10px;
+  margin-top:8px;
+}
+
+/* Open link a tutta larghezza, stessa altezza dei bottoni grandi */
+.split-2 .btn{
+  display:block;        /* invece di inline-block */
+  width:100%;
+  height:46px;          /* come Add step / Clear */
+  font-weight:800;
+  font-size:16px;
+  border-radius:14px;
+  text-align:center;
+}
+
+/* Il menu occupa tutta la colonna e il trigger ha la stessa altezza */
+.split-2 .menu{ width:100%; }
+.split-2 .menu .menu-trigger{
+  width:100%;
+  height:46px;          /* stessa altezza */
+  font-weight:800;
+  font-size:16px;
+  border-radius:14px;
+}
+
+
+/* Time field: input con toggle lungo a destra */
+.time-field{ position:relative; }
+.time-field input{
+  width:100%;
+  padding-right:180px;                 /* spazio per il toggle */
+}
+
+/* Toggle iOS con etichette "hours" / "days" */
+.ios-switch{
+  position:absolute;
+  top:50%; right:5px;
+  transform:translateY(-50%);
+  width:150px;
+  height:34px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#6b1631;
+  color:var(--fg);
+  cursor:pointer;
+  display:inline-block;
+  overflow:hidden;
+
+  /* 💡 padding crea il “canale” e permette al thumb di avere angoli tondi su entrambi i lati */
+  padding:4px;
+}
+
+/* placca rosa chiaro che scorre: più stretta della metà e con bordi totalmente arrotondati */
+.ios-switch .thumb{
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:calc(50% - 8px);               /* metà meno il padding dx/sx */
+  height:calc(100% - 8px);             /* piena altezza meno padding top/bottom */
+  border-radius:8px;                  /* arrotondata su tutti i lati */
+  background:#e63e62;      /* rosa chiaro (come Clear) */
+  transition:left .18s ease;
+  z-index: -1;
+}
+.ios-switch.on .thumb{
+  left:calc(50% + 4px);                 /* metà + padding = lato destro */
+}
+
+/* etichette dentro la pillola */
+.ios-switch .label{
+  position:absolute;
+  top:0; width:50%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:14px;
+  pointer-events:none;
+  opacity:.85;
+}
+.ios-switch .label.hours{ left:0; }
+.ios-switch .label.days { left:50%; }
+.ios-switch:not(.on) .label.hours{ opacity:1; }
+.ios-switch.on .label.days{ opacity:1; }
+
+/* Toggle più corto per °C / °F */
+.temp-switch {
+  width: 110px;
+}
+
+/* reset completo per i toggle */
+.ios-switch,
+.temp-switch{
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  background-image: none;
+
+  /* stile del tuo toggle (ribadito per vincere su regole globali) */
+  background: #6b1631 !important;
+  border: 1px solid var(--line) !important;
+  cursor: pointer;
+}
+
+/* mantieni lo stesso colore in hover/active/focus */
+.ios-switch:hover,
+.ios-switch:active,
+.ios-switch:focus,
+.ios-switch:focus-visible,
+.temp-switch:hover,
+.temp-switch:active,
+.temp-switch:focus,
+.temp-switch:focus-visible{
+  background: #6b1631 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Firefox: rimuove il bordo interno di default */
+.ios-switch::-moz-focus-inner,
+.temp-switch::-moz-focus-inner{
+  border: 0;
+  padding: 0;
+}
+
+
+/* --- CPC: campi richiesti mancanti --- */
+/* ——— Evidenziazione UNIFORME, senza gradient ——— */
+.time-field.is-missing,
+select.is-missing,
+input.is-missing {
+  background: #e63e62 !important;                  /* tinta piena */
+  background-image: none !important;               /* niente gradient */
+  -webkit-appearance: none !important;             /* safari/ios select/input */
+  appearance: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  mix-blend-mode: normal !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25) !important;
+  background-clip: padding-box !important;
+  border-radius: 12px;                              /* segue la forma */
+  transition: background .2s ease, box-shadow .2s ease;
+}
+
+/* Se il tema disegna effetti via pseudo-elementi sul wrapper */
+.time-field.is-missing::before,
+.time-field.is-missing::after {
+  content: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+
+/* Alcuni temi applicano gradient al <select> interno del wrapper */
+.time-field.is-missing select,
+.time-field.is-missing input {
+  background: transparent !important;              /* lascia il wrapper colorare */
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* --- Select: caret custom, spostato verso sinistra --- */
+select{
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 34px;                /* spazio per la freccia */
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* 🔸 più lontana dal bordo */
+  background-size: 10px 6px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+}
+
+/* Quando il campo è evidenziato (.is-missing) mantieni la freccia */
+select.is-missing{
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-right: 34px !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 10px 6px !important;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 6" width="10" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="%23ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important;
+}
+
+/* --- Inputs manuali senza gradient --- */
+input[type="number"],
+input[type="text"]{
+  background-image: none !important;   /* niente gradient/recessi strani di default */
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Anche quando evidenziati (.is-missing) mantiene tinta piatta */
+input.is-missing{
+  background-image: none !important;
+}
+
+/* Placeholder più chiaro quando il campo è evidenziato (missing) */
+.time-field.is-missing input::placeholder,
+input.is-missing::placeholder,
+.time-field.is-missing input::-webkit-input-placeholder,
+input.is-missing::-webkit-input-placeholder{
+  color: rgba(255,255,255,0.70) !important; /* più chiaro */
+  opacity: 1 !important;                    /* Safari */
+}
+
+/* (opzionale) Colore del testo reale nei campi evidenziati, per contrasto */
+.time-field.is-missing input,
+input.is-missing{
+  color: #ffffff !important;
+}
+
+
+/* RESTYLE CON SFUMATURE */
+
+body {
+    /* background-image: linear-gradient(to bottom right, #ea3434, #e63e62); */
+    /* background-image: linear-gradient(to bottom right, #cf6533, #8f0040); */
+    /* background: #e63e62; */
+    background: white;
+}
+.title {
+    background: #ffffff;
+    border: 1px solid #ffffff;
+    border-radius: 38px;
+    padding: 20px;
+    margin: 12px 0;
+    height: 56px;
+    padding-top: 5px;
+}
+h1 {
+    font-size: 1.8em;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* background-image: linear-gradient(to right, #ffffff, #fff1f4); */
+    background-image: linear-gradient(to bottom right, #ff7f42, #d70060);
+    margin: 0px;
+    text-align: center;
+}
+.page-title {
+  font-size: 1.8em;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-image: linear-gradient(to bottom right, #ff7f42, #d70060);
+  margin: 0;
+  text-align: center;
+}
+.h1-small {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(to bottom right, #ff7f42, #d70060);
+    text-align: center;
+    margin-top: -8px;
+}
+.card-title {
+    margin: 6px 0 18px;
+    font-size: 1.2em;
+}
+.generator-card-title {
+    margin: 6px 10px 0px;
+    font-size: 1.1em;
+}
+p.lead {
+    margin: 15px 20px;
+    color: #e63e62;
+    display: none;
+}
+.card {
+    border: 2px solid #ffffff;
+    /* background-image: linear-gradient(to bottom right, #8f0040, #cf6533); */
+    /* background-image: linear-gradient(to bottom right, #ac004d, #df3636); */
+    background-image: linear-gradient(to bottom right, #ac004d, #df3636);
+    border-radius: 38px;
+    padding: 20px;
+}
+.sum-row {
+    border-top: 1px dashed #ffffff;
+}
+.step {
+    border: 2px solid #ffffff;
+    border-radius: 38px;
+    /* background: #e63e62; */
+    /* background: #e63e6200; */
+    background-image: linear-gradient(to bottom right, #ac004d, #df3636);
+    background-clip: padding-box;
+}
+.step.fixed {
+    margin-top: 0px;
+    /* background: #e63e62; */
+    /* background: #e63e6200; */
+    background-image: linear-gradient(to bottom right, #ac004d, #df3636);
+    background-clip: padding-box;
+}
+label {
+    margin: 10px 10px 0px 10px;
+}
+.xbtn {
+    right: -17px;
+    top: -17px;
+    border: 0px solid #ffffff;
+}
+select, input, button {
+    border-radius: 38px;
+    border: 1px solid #ffffff;
+}
+.ios-switch {
+    border-radius: 38px;
+}
+.ios-switch .thumb {
+    border-radius: 38px;
+    background-image: linear-gradient(to bottom right, #ac004d, #df3636);
+}
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #cccccc; /* ← qui metti il colore che vuoi */
+  opacity: 1;     /* serve per Safari, altrimenti è troppo chiaro */
+}
+/* Producer helper sotto al titolo: bianco, allineato al label, spazio ridotto */
+#producerCard .producer-help{
+  color: var(--fg);
+  margin: 0px 10px 4px 10px; /* stessa rientranza del label (che usa 10px) */
+  font-size: 12px;
+  opacity: .9;
+}
+.processing-help{
+  color: var(--fg);
+  margin: 6px 10px 14px 10px; /* stessa rientranza del label (che usa 10px) */
+  font-size: 12px;
+  opacity: .9;
+}
+
+/* Switch "farm/coop" un filo più corto (testi brevi) */
+.farmtype-switch { width: 120px; }
+
+/* Spazio per il toggle a destra dell’input del nome */
+#producerCard .time-field input{
+  padding-right: 150px; /* sufficiente per il toggle da 120px + padding */
+}
+/* Coffee info: righe semplici "Label: value" */
+#producerInfo p{
+  margin: 6px -5px;
+}
+#producerInfo b{
+  font-weight: 700;
+}
+.icon-btn {
+    /* background: #6c1631; */
+    background: #6c1631;
+}
+button.ghost {
+    /* background: #e63e62; */
+    background: #6c1631;
+    border: 1px solid var(--line);
+    border: 2px solid white;
+}
+button {
+    border: 2px solid white;
+    background-image: linear-gradient(to bottom right, #ac004d, #df3636);
+}
+button#gen {
+    height: 56px;
+}
+.tiny {
+    margin: 8px 20px;
+    color: #e63e62;
+}
+.split-2 {
+    margin-top: 12px;
+}
+#cpc {
+    border: 2px solid #ffffff;
+    border-radius: 38px;
+}
+b {
+    margin: 0px 10px 0px 10px;
+}
+#copyIcon {
+    border: none;
+}
+#copyIcon svg {
+    position: fixed;
+}
+.split-2 .btn {
+    border-radius: 38px;
+    /* background: #e63e63; */
+    border: 2px solid white;
+    background: #6c1631;
+}
+.split-2 .menu .menu-trigger {
+    border-radius: 38px;
+}
+.menu-list {
+    background: #6c1632;
+    border: 2px solid #ffffff;
+    border-radius: 38px;
+    text-align: center;
+    width: inherit;
+}
+.menu-list a {
+    padding: 10px 14px;
+    color: var(--fg);
+    border-bottom: 1px solid #ffffff;
+}
+.time-field.is-missing, select.is-missing, input.is-missing {
+    border-radius: 38px;
+}
+/* Coffee info: layout a due colonne allineate */
+#producerInfo{
+  display: grid;
+  grid-template-columns: 1fr; /* larghezza della colonna label = la più lunga */
+  column-gap: 10px;
+  row-gap: 6px;
+}
+
+#producerInfo .k{
+  font-weight: 700;        /* label in grassetto */
+  text-align: left;       /* label allineate a destra */
+  white-space: nowrap;     /* evita a capo nelle label */
+  padding: 10px 0px 0px 0px;
+}
+
+/* Riduci il padding solo per la prima categoria (Farm/Cooperative name) */
+#producerInfo .k:first-of-type {
+  padding-top: 5px;       /* niente spazio sopra */
+}
+
+#producerInfo .v{
+  text-align: left;
+  word-break: break-word;  /* valori lunghi vanno a capo in modo pulito */
+}
+#producerInfo span.v:first-of-type {
+  padding-top: 5px;
+}
+/* FINE RESTYLE CON SFUMATURE */

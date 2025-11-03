@@ -1,0 +1,51 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Summary — Coffee Process Code</title>
+<link rel="stylesheet" href="css/styles.css">
+</head><body>  
+<div class="wrap">
+  <div class="title">
+  <h1 class="page-title">Coffee Process Code</h1>
+</div>
+
+<!-- BOX: Coffee info -->
+<div class="card" id="producerInfoCard">
+  <h2 class="card-title">Coffee info</h2>
+  <div id="producerInfo"></div>
+</div>
+
+<!-- BOX: Summary -->
+<div class="card">
+  <h2 class="card-title">Summary</h2>
+  <div id="processSummary" class="summary-paragraph"></div>
+</div>
+
+<!-- BOX: Code breakdown -->
+<div class="card">
+  <h2 class="card-title">Code breakdown</h2>
+  <p class="lead">Expand the titles for explanations about the different steps this coffee went through.</p>
+  <ul id="summary"></ul>
+</div>
+
+</div>
+<script type="module" src="js/summary.js"></script>
+
+<script type="module" src="js/summary-narrator.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    SummaryNarrator.init({
+      target: '#processSummary',
+      useLastly: true,
+      reasons: {
+        floated:   "to remove unripe or damaged cherries",
+        depulped:  "to remove the outer skin",
+        fermented: "",
+        washed:    "",
+        dried:     "",
+        rested:    "",
+        hulled:    "to remove the parchment layer"
+      }
+    });
+  });
+</script>  
+</body></html>

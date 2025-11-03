@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scan — Coffee Process Code</title>
+<link rel="stylesheet" href="css/styles.css">
+</head><body>
+<div class="wrap">
+  <h1>Scan</h1>
+  <p class="lead">Point your camera at a BeanTag, or upload the SVG exported by the generator.</p>
+
+  <div class="card">
+    <div class="inline">
+      <button id="startCam">Start camera</button>
+      <button id="stopCam" class="ghost">Stop</button>
+      <input type="file" id="filePick" accept=".svg,image/*">
+    </div>
+    <video id="video" playsinline muted style="width:100%;max-height:48vh;border-radius:12px;border:1px solid var(--line);background:#000"></video>
+    <canvas id="frame" width="640" height="480" style="display:none"></canvas>
+    <p id="scanHint" class="tiny"></p>
+  </div>
+
+  <div class="card">
+    <div class="inline" style="justify-content:space-between">
+      <b>Detected link</b>
+      <a id="openLink" class="btn" href="#" target="_blank" rel="noopener">Open</a>
+    </div>
+    <div id="urlOut" class="mono" style="word-break:break-all"></div>
+  </div>
+</div>
+<script type="module" src="js/scanner.js"></script>
+</body></html>

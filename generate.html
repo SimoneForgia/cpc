@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Generate — Coffee Process Code</title>
+<link rel="stylesheet" href="css/styles.css">
+  
+</head><body>
+<div class="wrap">
+  <h1 class="page-title">CPC and BeanTag</h1>
+  <h2 class="h1-small">generator</h2>
+  <p class="lead">Enter all the steps that the beans went through, between picking and hullling.</p>
+
+   <!-- Producer info (usa lo stile .step come gli Step) -->
+  <div class="step" id="producerCard">
+    <h2 class="generator-card-title">General info</h2>
+    <div class="row">
+      <label for="farmName">Name of the farm or cooperative</label>
+      <div class="time-field">
+        <input id="farmName" type="text" placeholder="e.g., Los Pinos / Nueva Esperanza" />
+        <!-- iOS-like switch: left=farm, right=coop -->
+        <button type="button"
+                class="ios-switch farmtype-switch"
+                id="farmTypeSwitch"
+                aria-pressed="false"
+                title="Toggle farm/coop">
+          <span class="label hours">farm</span>
+          <span class="label days">coop</span>
+          <span class="thumb"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label for="varieties">Coffee varieties</label>
+      <p class="producer-help">List all the varieties divided by a comma ,</p>
+      <input id="varieties" type="text" placeholder="e.g., caturra, bourbon, pacamara" />
+    </div>
+  </div>
+
+
+  
+  <div class="timeline card"> 
+    <div class="rail" id="rail" aria-hidden="true" style="top:0;height:0"></div>
+    <h2 class="generator-card-title">Processing</h2>
+    <p class="processing-help">List all the steps the beans went through after picking and before becoming green beans.</p>
+    <div class="step fixed" id="fixed-start"><b>Picking</b></div>
+    <div id="stepsWrap"></div>
+    <div class="step fixed" id="fixed-end"><b>Green coffee</b></div>
+
+  <div class="actions">
+    <button id="addStep" class="icon-btn">＋ Add step</button>
+    <button id="clearAll" class="ghost">Clear</button>
+  </div>
+    
+  </div>
+  <div class="actions" style="margin-top:8px">
+  <button id="gen" title="Generate CPC">Generate code</button>
+</div>
+
+  <p id="hint" class="tiny" style="margin-top:8px"></p>
+
+  <div class="card">
+    <div class="cpc-row">
+  <b>Coffee Process Code</b>
+  <div id="cpcWrap">
+    <div id="cpc" class="mono"></div>
+    <button id="copyIcon" title="Copy CPC" aria-label="Copy CPC">
+      <!-- tua icona SVG -->
+      <svg viewBox="0 0 115.77 122.88" aria-hidden="true"><path d="M89.62,13.96v7.73h12.19v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82v73.27h-0.02c-0.01,3.84-1.57,7.33-4.1,9.86c-2.51,2.5-5.98,4.06-9.82,4.07v0.02h-61.7v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82H13.96v-0.02c-3.84-0.01-7.34-1.57-9.86-4.1c-2.5-2.51-4.06-5.98-4.07-9.82V13.96h0.02c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07h61.7v0.02c3.85,0.01,7.34,1.57,9.86,4.1c2.5,2.51,4.06,5.98,4.07,9.82V13.96z M79.04,21.69v-7.73h0.02c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1h-61.7c-0.91,0-1.75,0.39-2.37,1.01c-0.61,0.61-1,1.46-1,2.37v64.59c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1h12.19V35.65c0.01-3.85,1.58-7.34,4.1-9.86c2.51-2.5,5.98-4.06,9.82-4.07H79.04z M105.18,108.92V35.65c0-0.91-0.39-1.75-1.01-2.37c-0.61-0.61-1.46-1-2.37-1h-61.7c-0.91,0-1.75,0.39-2.37,1.01c-0.61,0.61-1,1.46-1,2.37v73.27c0,0.91,0.39,1.75,1.01,2.37c0.61,0.61,1.46,1,2.37,1h61.7c0.91,0,1.75-0.39,2.37-1.01c0.61-0.61,1-1.46,1-2.37z"/></svg>
+    </button>
+  </div>
+</div>
+    <div id="beanPanel">
+  <b class="bean-title">BeanTag</b>
+  <div class="bean">
+    <canvas id="beanCanvas" width="220" height="240" aria-label="BeanTag"></canvas>
+  </div>
+</div>
+    <div class="split-2">
+      <a id="shareUrl" class="btn" href="#" target="_blank" rel="noopener">Open link</a>
+      <div>
+        
+
+<!-- Un solo menu per i download -->
+<div class="menu" id="downloadMenu">
+  <button class="ghost menu-trigger" id="downloadBtn" aria-expanded="false" aria-haspopup="true">
+    Download <span class="caret"></span>
+  </button>
+
+  <div class="menu-list" role="menu" aria-labelledby="downloadBtn">
+    <a href="#" id="dlPng" role="menuitem">PNG</a>
+    <a href="#" id="dlSvg" role="menuitem">SVG</a>
+  </div>
+</div>
+
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/generator.js"></script>
+</body></html>
+
+<script>
+  const menu = document.getElementById('downloadMenu');
+  const btn  = document.getElementById('downloadBtn');
+  const linkPng = document.getElementById('dlPng');
+  const linkSvg = document.getElementById('dlSvg');
+
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    const open = menu.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  // Chiudi cliccando fuori o premendo ESC
+  document.addEventListener('click', e => {
+    if (!menu.contains(e.target)) {
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+</script>
+
