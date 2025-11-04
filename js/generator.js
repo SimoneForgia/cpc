@@ -201,7 +201,7 @@ function digitOnly(el, maxLen = 3) {
 /* ===== Precheck / Warning card ===== */
 function getWarnings(allSteps) {
   const stepsFilled = allSteps
-    .map((s, idx) => ({...s, _i: idx}))
+    .map((s, idx) => ({ ...s, _i: idx }))
     .filter(s => s.main);
 
   const warnings = [];
@@ -246,6 +246,23 @@ function getWarnings(allSteps) {
     if (hasLAfterD) warnings.push('There is a floating step after drying.');
   }
 
+  // --- NEW: Resting in cherries (RC) AFTER depulping (P) ---
+  const pIdxs = stepsFilled.filter(s => s.main === 'P').map(s => s._i);
+  if (pIdxs.length > 0) {
+    const earliestP = Math.min(...pIdxs);
+    const rcAfterP = stepsFilled.some(s => s.main === 'R' && s.sub === 'C' && s._i > earliestP);
+    if (rcAfterP) {
+      warnings.push('There is a resting in cherries step after depulping.');
+    }
+  }
+
+  // --- NEW: Resting in parchment (RP) WITHOUT a prior depulping (P) ---
+  const rpWithoutPrevP = stepsFilled.some(s =>
+    s.main === 'R' && s.sub === 'P' && !pIdxs.some(pi => pi < s._i)
+  );
+  if (rpWithoutPrevP) {
+    warnings.push('There is a resting in parchment step without any preceding depulping step.');
+  }
 
   return warnings;
 }
@@ -254,6 +271,11 @@ function getWarnings(allSteps) {
 function clearWarnCard() {
   const old = document.getElementById('precheckWarnCard');
   if (old) old.remove();
+  // rimuove anche il messaggio sotto al bottone
+  const hintEl = document.getElementById('hint');
+  if (hintEl && hintEl.textContent.includes('Review the notes above')) {
+    hintEl.textContent = '';
+  }
 }
 
 function showWarnCard(messages) {
@@ -363,13 +385,23 @@ function renderExtras(i, cfg, s) {
       <select id="sub-${i}">
         <option value="">Select an option</option>
         ${cfg.sub.map(k => {
-        const key = (s.main || '') + k;            // es. 'F' + 'A' => 'FA'
-        const label = SUB_LABELS[key] || SUB_LABELS[k] || k;
-        return `<option value="${k}" ${s.sub === k ? 'selected' : ''}>${label}</option>`;
+          const key = (s.main || '') + k;            // es. 'F' + 'A' => 'FA'
+          const label = SUB_LABELS[key] || SUB_LABELS[k] || k;
+          return `<option value="${k}" ${s.sub === k ? 'selected' : ''}>${label}</option>`;
         }).join('')}
       </select>`;
     host.appendChild(sub);
-    sub.querySelector('#sub-' + i).addEventListener('change', e => { s.sub = e.target.value; });
+
+    // >>> PATCH: quando cambia solo il Subtype, rimuovi evidenziazione e resetta precheck
+    sub.querySelector('#sub-' + i).addEventListener('change', e => {
+      s.sub = e.target.value;
+
+      // rimuove l’eventuale highlight "missing" sul select
+      e.target.classList.remove('is-missing');
+
+      // azzera conferma/avvisi della card di precheck e ripristina il bottone
+      invalidatePrecheck();
+    });
   }
 
   // 2) Depulping → Mucilage left %
