@@ -246,7 +246,7 @@ canvas#beanCanvas{width:min(64vw,260px);height:auto;background:#FFFFFF;border-ra
 
 #copyIcon{
   position:absolute;
-  right:6px;
+  right:11px;
   top:50%;
   transform:translateY(-50%); /* centratura verticale perfetta */
   width:32px;
@@ -258,7 +258,42 @@ canvas#beanCanvas{width:min(64vw,260px);height:auto;background:#FFFFFF;border-ra
 #copyIcon svg{ width:18px;height:18px;fill:currentColor; }
 
 
+/* Tooltip "Copied!" sopra all'icona */
+#copyIcon.copied::after{
+  content: "Copied!";
+  position: absolute;
+  right: 0;                 /* si ancora al bordo destro del bottone */
+  top: -36px;
+  transform: translateY(6px);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: #6c1631;
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  animation: copyFadeUp 1.2s ease forwards;
+  pointer-events: none;
+  z-index: 20;
+}
 
+@keyframes copyFadeUp{
+  0%   { opacity: 0; transform: translateY(6px); }
+  20%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+/* Flash sul box del CPC quando copi */
+#cpc.flash{
+  animation: cpcFlash 0.9s ease;
+}
+@keyframes cpcFlash{
+  0%   { box-shadow: inset 0 0 0 0 #ffffff; }
+  50%  { box-shadow: inset 0 0 0 2px #ffffff; }
+  100% { box-shadow: inset 0 0 0 0 #ffffff; }
+}
 
 a.btn{display:inline-block;background:transparent;border:1px solid var(--line);
       color:var(--fg);text-decoration:none;padding:10px 12px;border-radius:10px}
@@ -719,7 +754,7 @@ b {
     border: none;
 }
 #copyIcon svg {
-    position: fixed;
+    position: static;
 }
 .split-2 .btn {
     border-radius: 38px;

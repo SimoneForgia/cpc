@@ -35,6 +35,8 @@ window.addEventListener('load', setRail);
 /* ------- State ------- */
 let steps = [blankStep(), blankStep()];
 let producer = { type: 'farm', name: '', varieties: '' };
+let precheckAck = false; // conferma avviso pre-generazione (vale solo finché non modifichi gli step)
+const GEN_DEFAULT_LABEL = 'Generate code';
 
 function syncFarmPlaceholder(){
   const inp = document.getElementById('farmName');
@@ -155,6 +157,140 @@ function unitFor(s){
   return 'Hours';
 }
 
+// === Helper: consenti solo cifre (blocco tasti/paste) ===
+function digitOnly(el, maxLen = 3) {
+  // Tastiera: consenti solo cifre e tasti di controllo
+  el.addEventListener('keydown', (e) => {
+    const ctrl = ['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'];
+    if (ctrl.includes(e.key)) return;
+
+    // Se è una cifra...
+    if (/^\d$/.test(e.key)) {
+      // limita lunghezza quando non c'è selezione
+      const hasSelection = el.selectionStart !== el.selectionEnd;
+      const digitsLen = (el.value.match(/\d/g) || []).length;
+      if (!hasSelection && digitsLen >= maxLen) e.preventDefault();
+      return;
+    }
+
+    // Blocca tutto il resto (es. e, E, +, -, ., , ...)
+    e.preventDefault();
+  });
+
+  // Incolla: tieni solo cifre
+  el.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const t = (e.clipboardData.getData('text') || '').replace(/\D+/g, '').slice(0, maxLen);
+    // inserisci testo pulito
+    const start = el.selectionStart, end = el.selectionEnd;
+    const before = el.value.slice(0, start);
+    const after  = el.value.slice(end);
+    el.value = (before + t + after).slice(0, maxLen + before.length + after.length);
+    const pos = before.length + t.length;
+    el.setSelectionRange(pos, pos);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  // Salvaguardia: se qualcosa passa, ripulisci
+  el.addEventListener('input', () => {
+    const cleaned = el.value.replace(/\D+/g, '').slice(0, maxLen);
+    if (el.value !== cleaned) el.value = cleaned;
+  });
+}
+
+/* ===== Precheck / Warning card ===== */
+function getWarnings(allSteps) {
+  const stepsFilled = allSteps
+    .map((s, idx) => ({...s, _i: idx}))
+    .filter(s => s.main);
+
+  const warnings = [];
+  const count = (L) => stepsFilled.filter(s => s.main === L).length;
+  const firstIndex = (L) => {
+    const f = stepsFilled.find(s => s.main === L);
+    return (f ? f._i : -1);
+  };
+
+  // 2+ Floating
+  if (count('L') >= 2) warnings.push('You added two or more floating steps.');
+
+  // 2+ Depulping
+  if (count('P') >= 2) warnings.push('You added two or more depulping steps.');
+
+  // No Drying
+  if (count('D') === 0) warnings.push('No drying step is present.');
+
+  // No Hulling
+  if (count('H') === 0) warnings.push('No hulling step is present.');
+
+  // Washing without prior Depulping
+  const wIdx = firstIndex('W');
+  if (wIdx >= 0) {
+    const hasPrevP = stepsFilled.some(s => s.main === 'P' && s._i < wIdx);
+    if (!hasPrevP) warnings.push('There is a washing step without any preceding depulping step.');
+  }
+
+  // Steps after Hulling
+  const hIdx = firstIndex('H');
+  if (hIdx >= 0) {
+    const hasAfterH = stepsFilled.some(s => s._i > hIdx);
+    if (hasAfterH) warnings.push('There are steps after hulling.');
+  }
+
+  // Washing or Floating after Drying (split messages)
+  const dIdx = firstIndex('D');
+  if (dIdx >= 0) {
+    const hasWAfterD = stepsFilled.some(s => s.main === 'W' && s._i > dIdx);
+    const hasLAfterD = stepsFilled.some(s => s.main === 'L' && s._i > dIdx);
+    if (hasWAfterD) warnings.push('There is a washing step after drying.');
+    if (hasLAfterD) warnings.push('There is a floating step after drying.');
+  }
+
+
+  return warnings;
+}
+
+
+function clearWarnCard() {
+  const old = document.getElementById('precheckWarnCard');
+  if (old) old.remove();
+}
+
+function showWarnCard(messages) {
+  clearWarnCard();
+
+  const genBtn = document.getElementById('gen');
+  if (!genBtn) return;
+  const actions = genBtn.closest('.actions') || genBtn.parentElement;
+
+  const card = document.createElement('div');
+  card.id = 'precheckWarnCard';
+  card.className = 'card';
+  card.style.marginBottom = '8px';
+  card.innerHTML = `
+    <b style="display:block;margin-bottom:6px">Please review these points before generating:</b>
+    <ul style="margin:0; padding-left:1.5em; list-style-position:outside;">
+      ${messages.map(m => `<li style="margin:0 0 4px 0;">${m}</li>`).join('')}
+    </ul>
+  `;
+
+  actions.parentNode.insertBefore(card, actions);
+
+  // Cambia il testo del bottone principale
+  genBtn.textContent = 'Yes, I confirm';
+  precheckAck = true; // al prossimo click si procederà alla generazione
+}
+
+function invalidatePrecheck() {
+  precheckAck = false;
+  clearWarnCard();
+  const genBtn = document.getElementById('gen');
+  if (genBtn) genBtn.textContent = GEN_DEFAULT_LABEL;
+}
+
+
+
+
 /* ------- Step UI ------- */
 function buildStepBlock(i){
   const s = steps[i];
@@ -186,6 +322,7 @@ function buildStepBlock(i){
   // remove (consentito anche sui primi due; la validazione sta nel Generate)
   card.querySelector('.xbtn').addEventListener('click', ()=>{
     steps.splice(i,1);
+    invalidatePrecheck();
     refreshSteps();
   });
 
@@ -206,6 +343,7 @@ function buildStepBlock(i){
 
     renderExtras(i, cfg, s); 
     setRail();
+    invalidatePrecheck(); 
   });
 
   renderExtras(i, CATALOG.find(x=>x.main===s.main)||{duration:false,extras:false,sub:[]}, s);
@@ -248,7 +386,7 @@ function renderExtras(i, cfg, s) {
     pct.querySelector('#pct-'+i).addEventListener('change', e => { s.mucilagePct = e.target.value; });
   }
 
-  // 3) Time + iOS toggle (hours/days) dentro al campo
+// 3) Time + iOS toggle (hours/days) dentro al campo
 if (cfg.duration) {
   if (!s.unit) s.unit = 'h';   // di sicurezza
 
@@ -257,7 +395,8 @@ if (cfg.duration) {
   time.innerHTML = `
     <label for="hrs-${i}">Time${s.main==='D' ? ' (optional)' : ''}</label>
     <div class="time-field">
-      <input id="hrs-${i}" type="number" min="0" max="999"
+      <input id="hrs-${i}" type="number" min="0" max="999" step="1"
+             inputmode="numeric" pattern="\\d*"
              placeholder="e.g., ${s.unit==='d' ? '3' : '24'}"
              value="${s.hours}"/>
       <button type="button"
@@ -271,25 +410,23 @@ if (cfg.duration) {
     </div>`;
   host.appendChild(time);
 
-  // input
-  time.querySelector('#hrs-'+i).addEventListener('input', e=>{
-    const v = e.target.value.replace(/[^0-9]/g,'');
-    s.hours = v.slice(0,3);
+  // input: SOLO CIFRE
+  const hrsInput = time.querySelector('#hrs-'+i);
+  digitOnly(hrsInput, 3);
+  hrsInput.addEventListener('input', (e) => {
+    s.hours = e.target.value;           // già “digit-only”
   });
 
-  // toggle
+  // toggle h/d
   const sw = time.querySelector('.ios-switch');
-  const inp = time.querySelector('#hrs-'+i);
   sw.addEventListener('click', ()=>{
     const on = !sw.classList.contains('on');
     sw.classList.toggle('on', on);
     sw.setAttribute('aria-pressed', on ? 'true' : 'false');
     s.unit = on ? 'd' : 'h';
-    if (!inp.value) inp.placeholder = `e.g., ${s.unit==='d' ? '3' : '24'}`;
+    if (!hrsInput.value) hrsInput.placeholder = `e.g., ${s.unit==='d' ? '3' : '24'}`;
   });
 }
-
-
 
 
   // 4) Fermentation → extra campi
@@ -297,53 +434,56 @@ if (cfg.duration) {
     // Container + Temperature + Addition + (Addition kind*) + Thermal shock
     
     // Temperature con toggle °C / °F
-const temp = document.createElement('div');
-temp.className = 'row';
-if (!s.extras.unitTemp) s.extras.unitTemp = 'C'; // default
-temp.innerHTML = `
-  <label for="temp-${i}">Temperature (optional)</label>
-  <div class="time-field">
-    <input id="temp-${i}" type="number" placeholder="e.g., ${s.extras.unitTemp==='F' ? '64' : '18'}" value="${s.extras.temp || ''}"/>
-    <button type="button"
-            class="ios-switch temp-switch ${s.extras.unitTemp==='F' ? 'on' : ''}"
-            aria-pressed="${s.extras.unitTemp==='F' ? 'true' : 'false'}"
-            title="Toggle °C/°F">
-      <span class="label hours">°C</span>
-      <span class="label days">°F</span>
-      <span class="thumb"></span>
-    </button>
-  </div>`;
-host.appendChild(temp);
+    const temp = document.createElement('div');
+    temp.className = 'row';
+    if (!s.extras.unitTemp) s.extras.unitTemp = 'C'; // default
+    temp.innerHTML = `
+      <label for="temp-${i}">Temperature (optional)</label>
+      <div class="time-field">
+        <input id="temp-${i}" type="number" min="0" max="999" step="1"
+              inputmode="numeric" pattern="\\d*"
+              placeholder="e.g., ${s.extras.unitTemp==='F' ? '64' : '18'}"
+              value="${s.extras.temp || ''}"/>
+        <button type="button"
+                class="ios-switch temp-switch ${s.extras.unitTemp==='F' ? 'on' : ''}"
+                aria-pressed="${s.extras.unitTemp==='F' ? 'true' : 'false'}"
+                title="Toggle °C/°F">
+          <span class="label hours">°C</span>
+          <span class="label days">°F</span>
+          <span class="thumb"></span>
+        </button>
+      </div>`;
+    host.appendChild(temp);
 
-// input listener
-temp.querySelector('#temp-' + i).addEventListener('input', e => {
-  const v = e.target.value.replace(/[^0-9.,]/g, '');
-  s.extras.temp = v.trim();
-});
+    // input: SOLO CIFRE
+    const inpT = temp.querySelector('#temp-' + i);
+    digitOnly(inpT, 3);
+    inpT.addEventListener('input', (e) => {
+      s.extras.temp = e.target.value;   // solo numeri
+    });
 
-// toggle listener
-const swT = temp.querySelector('.temp-switch');
-const inpT = temp.querySelector('#temp-' + i);
-swT.addEventListener('click', () => {
-  const on = !swT.classList.contains('on');
-  swT.classList.toggle('on', on);
-  swT.setAttribute('aria-pressed', on ? 'true' : 'false');
-  s.extras.unitTemp = on ? 'F' : 'C';
-  if (!inpT.value) inpT.placeholder = `e.g., ${s.extras.unitTemp==='F' ? '64' : '18'}`;
-});
+    // toggle °C/°F
+    const swT = temp.querySelector('.temp-switch');
+    swT.addEventListener('click', () => {
+      const on = !swT.classList.contains('on');
+      swT.classList.toggle('on', on);
+      swT.setAttribute('aria-pressed', on ? 'true' : 'false');
+      s.extras.unitTemp = on ? 'F' : 'C';
+      if (!inpT.value) inpT.placeholder = `e.g., ${s.extras.unitTemp==='F' ? '64' : '18'}`;
+    });
 
     
     const thermal = document.createElement('div');
-thermal.className = 'row';
-thermal.innerHTML = `
-  <label for="th-${i}">Thermal shock</label>
-  <select id="th-${i}">
-    <option value="">Select an option</option>
-    <option value="no"  ${s.extras.thermal==='no'?'selected':''}>No</option>
-    <option value="yes" ${s.extras.thermal==='yes'?'selected':''}>Yes</option>
-  </select>`;
-host.appendChild(thermal);
-thermal.querySelector('#th-'+i).addEventListener('change', e => { s.extras.thermal = e.target.value; });
+    thermal.className = 'row';
+    thermal.innerHTML = `
+      <label for="th-${i}">Thermal shock</label>
+      <select id="th-${i}">
+        <option value="">Select an option</option>
+        <option value="no"  ${s.extras.thermal==='no'?'selected':''}>No</option>
+        <option value="yes" ${s.extras.thermal==='yes'?'selected':''}>Yes</option>
+      </select>`;
+    host.appendChild(thermal);
+    thermal.querySelector('#th-'+i).addEventListener('change', e => { s.extras.thermal = e.target.value; });
 
     
     const cont = document.createElement('div');
@@ -439,6 +579,7 @@ function refreshSteps(){
   stepsWrap.innerHTML='';
   steps.forEach((_,i)=> buildStepBlock(i));
   setRail();
+  invalidatePrecheck(); // <-- reset conferma ad ogni rebuild
 }
 
 
@@ -517,9 +658,10 @@ wireProducer();
 
 
 // Add / Clear
-$('#addStep').addEventListener('click', () => { steps.push(blankStep()); refreshAndRail(); });
+$('#addStep').addEventListener('click', () => { steps.push(blankStep()); invalidatePrecheck(); refreshAndRail(); });
 $('#clearAll').addEventListener('click', () => {
   steps = [blankStep(), blankStep()];
+  invalidatePrecheck();
   refreshAndRail();
   if (cpcEl) cpcEl.textContent = '';
   if (hint) hint.textContent = '';
@@ -528,6 +670,7 @@ $('#clearAll').addEventListener('click', () => {
 
 // Generate
 $('#gen')?.addEventListener('click', async () => {
+
   clearMissing();
   // leggi i valori correnti degli input Producer (anche se i listener non fossero ancora partiti)
   producer.name = (document.getElementById('farmName')?.value || '').trim();
@@ -629,6 +772,21 @@ if (s.main === 'D') {
     return;
   }
 
+  // --- Precheck of process consistency ---
+  const warnings = getWarnings(steps);
+  if (warnings.length && !precheckAck) {
+    showWarnCard(warnings);
+    hint.textContent = 'Review the notes above; then click the button above if you want to proceed.';
+    return;
+  }
+
+  // User has confirmed: close the card and restore the button label, then proceed
+if (precheckAck) {
+  clearWarnCard();
+  const genBtnEl = document.getElementById('gen');
+  if (genBtnEl) genBtnEl.textContent = GEN_DEFAULT_LABEL;
+  precheckAck = false; // reset after consuming confirmation
+}
 
   // ok: genera CPC e aggiorna UI
   const cpc = buildCPC();
@@ -644,10 +802,41 @@ if (s.main === 'D') {
 
 
 // Copy CPC (eventuale icona o fallback bottone)
-(document.getElementById('copyIcon') || document.getElementById('copyCpc'))?.addEventListener('click', ()=>{
-  const t=cpcEl.textContent.trim(); if(!t){alert('Generate the code first.');return;}
-  navigator.clipboard.writeText(t).catch(()=>alert('Copy failed.'));
-});
+{
+  const copyBtn = document.getElementById('copyIcon') || document.getElementById('copyCpc');
+  if (copyBtn) {
+    const originalSvg = copyBtn.innerHTML; // salva l'icona originale
+    copyBtn.addEventListener('click', async () => {
+      const t = cpcEl.textContent.trim();
+      if (!t) { hint.textContent = 'Generate the code first.'; return; }
+      try {
+        await navigator.clipboard.writeText(t);
+        // feedback visivo
+        copyBtn.classList.add('copied');
+        copyBtn.setAttribute('aria-label','Copied!');
+        copyBtn.setAttribute('title','Copied!');
+        // icona ✓ temporanea
+        copyBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M9 16.2l-3.5-3.5-1.4 1.4L9 19 20.3 7.7l-1.4-1.4z"/>
+          </svg>`;
+        // flash sul riquadro del codice
+        const codeBox = document.getElementById('cpc');
+        codeBox?.classList.add('flash');
+        setTimeout(() => codeBox?.classList.remove('flash'), 900);
+        // ripristino
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.innerHTML = originalSvg;
+          copyBtn.setAttribute('aria-label','Copy CPC');
+          copyBtn.setAttribute('title','Copy CPC');
+        }, 1400);
+      } catch {
+        hint.textContent = 'Copy failed. Your browser blocked clipboard.';
+      }
+    });
+  }
+}
 
 // Download unico con menu (se presente)
 const dlMenu = document.getElementById('dlMenu');
